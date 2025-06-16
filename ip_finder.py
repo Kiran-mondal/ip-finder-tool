@@ -1,87 +1,60 @@
-import socket
-import requests
-import pyfiglet
-import json
-import os
-from datetime import datetime
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.prompt import Prompt
+import socket import requests import json from datetime import datetime from urllib.parse import urlparse from pyfiglet import Figlet from rich import print from rich.table import Table
 
-console = Console()
-LOG_FILE = "log.json"
+API_URL = "https://ipinfo.io/{}?token=your_token_here"  # Replace with your token LOG_FILE = "log.json"
 
-def show_banner():
-    banner = pyfiglet.figlet_format("IP Finder v2.0", font="slant")
-    console.clear()
-    console.print(f"[bold cyan]{banner}[/bold cyan]")
-    console.print(Panel.fit("[bold green]IP Lookup Tool by Kiran Mondal[/]\n[bold blue]GitHub:[/] https://github.com/Kiran-mondal/ip-finder-tool"))
+figlet = Figlet(font='slant') print(f"[bold blue]{figlet.renderText('IP Finder Tool')}[/bold blue]")
 
-def resolve_domain(domain):
-    try:
-        return socket.gethostbyname(domain)
-    except socket.gaierror:
-        return None
+def extract_domain(input_str): if input_str.startswith("http://") or input_str.startswith("https://"): parsed_url = urlparse(input_str) return parsed_url.hostname return input_str
 
-def get_ip_info(ip):
-    try:
-        return requests.get(f"https://ipinfo.io/{ip}/json").json()
-    except Exception as e:
-        return {"error": str(e)}
+def get_ip_info(ip_or_domain): try: # Extract domain if URL is given domain = extract_domain(ip_or_domain) ip_address = socket.gethostbyname(domain) except socket.gaierror: print(f"[red]Invalid domain, URL or IP: {ip_or_domain}[/red]") return None
 
-def print_info(info):
-    if "error" in info:
-        console.print(f"[bold red]❌ Error:[/] {info['error']}")
-        return
-    table = Table(title="📍 IP Info", style="cyan")
-    table.add_column("Field", style="bold yellow")
-    table.add_column("Value", style="white")
-    for key, value in info.items():
-        table.add_row(str(key), str(value))
-    console.print(table)
+response = requests.get(API_URL.format(ip_address))
+if response.status_code != 200:
+    print("[red]Failed to fetch IP info.[/red]")
+    return None
 
-def save_log(ip, info):
-    log = {"ip": ip, "timestamp": datetime.now().isoformat(), "data": info}
-    data = []
-    if os.path.exists(LOG_FILE):
-        with open(LOG_FILE, "r") as f:
-            try:
-                data = json.load(f)
-            except json.JSONDecodeError:
-                pass
-    data.append(log)
-    with open(LOG_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+data = response.json()
+data["ip"] = ip_address  # Add resolved IP
+data["hostname"] = data.get("hostname", socket.getfqdn(ip_address))
+return data
 
-def main():
-    show_banner()
-    while True:
-        user_input = Prompt.ask("\n[bold green]Enter IP or domain (or leave blank to auto-detect)[/]").strip()
+def print_ip_info(data): table = Table(title="📍 IP Information") table.add_column("Field", style="cyan", no_wrap=True) table.add_column("Value", style="green")
 
-        if user_input.lower() in ["exit", "quit"]:
-            console.print("[bold red]👋 Goodbye![/bold red]")
-            break
+fields = [
+    ("IP", data.get("ip", "N/A")),
+    ("Hostname", data.get("hostname", "N/A")),
+    ("City", data.get("city", "N/A")),
+    ("Region", data.get("region", "N/A")),
+    ("Country", data.get("country", "N/A")),
+    ("Location", data.get("loc", "N/A")),
+    ("Org", data.get("org", "N/A")),
+    ("Timezone", data.get("timezone", "N/A"))
+]
 
-        if not user_input:
-            user_input = requests.get("https://api.ipify.org").text
-            console.print(f"[bold blue]Your public IP:[/] {user_input}")
-        elif not user_input.replace('.', '').isdigit():
-            resolved = resolve_domain(user_input)
-            if resolved:
-                console.print(f"[bold blue]Resolved IP:[/] {resolved}")
-                user_input = resolved
-            else:
-                console.print("[bold red]❌ Invalid domain.[/]")
-                continue
+for name, value in fields:
+    table.add_row(name, value)
 
-        info = get_ip_info(user_input)
-        print_info(info)
-        save_log(user_input, info)
+print(table)
 
-        again = Prompt.ask("[bold magenta]🔁 Lookup again? (y/n)[/]", default="y")
-        if again.lower() != "y":
-            break
+def save_log(entry): try: with open(LOG_FILE, "r") as f: logs = json.load(f) except (FileNotFoundError, json.JSONDecodeError): logs = []
 
-if __name__ == "__main__":
-    main()
+entry["timestamp"] = datetime.now().isoformat()
+logs.append(entry)
+
+with open(LOG_FILE, "w") as f:
+    json.dump(logs, f, indent=4)
+
+while True: user_input = input("\nEnter domain, link, or IP (leave blank for your own): ").strip() if not user_input: user_input = requests.get("https://api.ipify.org").text print(f"[yellow]Detected your IP: {user_input}[/yellow]")
+
+ip_info = get_ip_info(user_input)
+if ip_info:
+    print_ip_info(ip_info)
+    save_log(ip_info)
+
+try:
+    again = input("\n[?] Lookup another? (y/n): ").strip().lower()
+    if again != 'y':
+        break
+except KeyboardInterrupt:
+    break
+
