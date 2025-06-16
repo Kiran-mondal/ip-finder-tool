@@ -1,40 +1,21 @@
-🌐 IP Finder Tool
+🌐 Domain to IP Finder
 
 
 
-A powerful terminal-based IP & domain lookup tool with auto-detection and live IP information fetching using the IPinfo API. Stylish, informative, and logs everything you check!
+A simple terminal-based tool that resolves domain names into their corresponding IP addresses. Lightweight, fast, and perfect for quick lookups.
 
 
 ---
 
 ✨ Features
 
-🔗 Accepts domain, IP, or URL as input
+🔗 Accepts domain name as input
 
-🔍 Auto-detects your own public IP if no input is provided
+🌐 Returns the IP address
 
-🌎 Displays detailed location and network info:
+🎨 Styled terminal output using pyfiglet and rich
 
-IP Address
-
-Hostname
-
-City, Region, Country
-
-Location (lat, long)
-
-Organization
-
-Timezone
-
-
-📊 Clean output in styled tables using rich
-
-🎨 Banner header using pyfiglet
-
-📁 Auto-logs results in log.json with timestamps
-
-🔁 Loops until you exit (Ctrl+C or type 'n')
+🔁 Repeats until user exits
 
 
 
@@ -47,16 +28,7 @@ git clone https://github.com/Kiran-mondal/ip-finder-tool.git
 cd ip-finder-tool
 
 # Install dependencies
-pip install -r requirements.txt
-
-Dependencies:
-
-requests
-
-pyfiglet
-
-rich
-
+pip install pyfiglet rich
 
 
 ---
@@ -67,21 +39,8 @@ python ip_finder.py
 
 Example
 
-Enter domain, link, or IP (leave blank for your own): google.com
-
-📍 IP Information:
-+-------------+---------------------------+
-| Field       | Value                     |
-+-------------+---------------------------+
-| IP          | 142.250.195.142           |
-| Hostname    | lhr25s12-in-f14.1e100.net |
-| City        | London                    |
-| Region      | England                   |
-| Country     | GB                        |
-| Location    | 51.5074,-0.1278           |
-| Org         | Google LLC                |
-| Timezone    | Europe/London             |
-+-------------+---------------------------+
+Enter domain name (e.g. google.com): google.com
+✅ IP Address of google.com: 142.250.195.14
 
 
 ---
@@ -96,29 +55,9 @@ Enter domain, link, or IP (leave blank for your own): google.com
 
 ---
 
-📌 Note
-
-> 🔐 You need to set your own IPinfo API Token in the script. Get it free at: https://ipinfo.io/signup
-
-
-
-Replace this line in the code:
-
-API_URL = "https://ipinfo.io/{}?token=your_token_here"
-
-
----
-
 📦 License
 
 This project is licensed under the MIT License. See LICENSE for more info.
-
-
----
-
-🖼 Preview (Coming soon!)
-
-Animated example GIF or screenshot will be added soon to help visualize usage.
 
 
 ---
